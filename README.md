@@ -13,6 +13,7 @@ An AI-powered meal planning web app that builds a real shopping basket from the 
 - [Prerequisites](#prerequisites)
 - [Local Setup](#local-setup)
 - [Running the App](#running-the-app)
+- [Deploy to Render](#deploy-to-render)
 - [Environment Variables](#environment-variables)
 - [Project Structure](#project-structure)
 - [How Each Component Works](#how-each-component-works)
@@ -226,12 +227,66 @@ python main.py ai-plan --dry-run   # preview prompt without calling the API
 
 ---
 
+## Deploy to Render
+
+The project ships with a `render.yaml` that declares both services. Render reads this file automatically when you connect the repo.
+
+### Services
+
+| Service | Type | Name |
+|---|---|---|
+| FastAPI backend | Web Service (Python) | `aldi-meal-planner-api` |
+| React frontend | Static Site | `aldi-meal-planner` |
+
+### Steps
+
+**1. Push the repo to GitHub** (already done if you cloned this).
+
+**2. Create a new Render Blueprint**
+- Go to [dashboard.render.com](https://dashboard.render.com) → **New → Blueprint**
+- Connect your GitHub repo
+- Render detects `render.yaml` and creates both services automatically
+
+**3. Set environment variables**
+
+After the Blueprint is created, set these in the Render dashboard for each service.
+
+For the **backend** (`aldi-meal-planner-api`):
+
+| Variable | Value |
+|---|---|
+| `GEMINI_API_KEY` | Your Google Gemini API key |
+| `USDA_API_KEY` | Your USDA FoodData Central key |
+| `ALLOWED_ORIGINS` | Your frontend URL, e.g. `https://aldi-meal-planner.onrender.com` |
+
+For the **frontend** (`aldi-meal-planner`):
+
+| Variable | Value |
+|---|---|
+| `VITE_API_URL` | Your backend URL, e.g. `https://aldi-meal-planner-api.onrender.com` |
+
+> **Order matters:** deploy the backend first to get its URL, then set `VITE_API_URL` on the frontend and trigger a redeploy.
+
+**4. Trigger deploys**
+- Backend: deploys automatically on push to `main`
+- Frontend: rebuild triggered by push or manually from the dashboard
+
+### Free tier notes
+
+- Render free web services **spin down after 15 minutes of inactivity**. The first request after a cold start takes ~30 seconds. Upgrade to the Starter plan ($7/month) to avoid spin-down.
+- The static site never spins down — it is served from Render's CDN.
+- The USDA nutrition cache (`nutrition_cache.json`) is stored on the local filesystem and is **lost on every redeploy** on the free tier (ephemeral filesystem). Consider using a persistent disk ($1/month) or an external KV store if you want the cache to survive deploys.
+
+---
+
 ## Environment Variables
 
 | Variable | Required | Description |
 |---|---|---|
 | `GEMINI_API_KEY` | Yes | Google Gemini API key for meal plan generation |
 | `USDA_API_KEY` | Recommended | USDA FoodData Central key for real nutrition data |
+| `ALLOWED_ORIGINS` | Production | Comma-separated frontend URLs for CORS. Defaults to localhost. |
+| `VITE_API_URL` | Production | Backend base URL for the React frontend. Empty in local dev (uses Vite proxy). |
 
 ---
 

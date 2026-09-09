@@ -26,13 +26,23 @@ from ai_planner import generate, filter_catalog, CatalogItem
 
 app = FastAPI(title="Aldi Budget Meal Planner API", version="2.0")
 
+
+def _parse_origins(raw: str) -> list[str]:
+    """Split a comma-separated ALLOWED_ORIGINS string into a list, stripping whitespace."""
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", "http://127.0.0.1:5173",
-        "http://localhost:5174", "http://127.0.0.1:5174",
-        "http://localhost:3000", "http://127.0.0.1:3000",
-    ],
+    # In production set ALLOWED_ORIGINS to your frontend URL, e.g.:
+    #   ALLOWED_ORIGINS=https://aldi-meal-planner.onrender.com
+    # Multiple origins: comma-separated.
+    # Defaults to localhost dev origins when the var is not set.
+    allow_origins=_parse_origins(os.environ.get(
+        "ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,"
+        "http://localhost:5174,http://127.0.0.1:5174,"
+        "http://localhost:3000,http://127.0.0.1:3000",
+    )),
     allow_methods=["POST", "GET", "OPTIONS"],
     allow_headers=["*"],
 )
@@ -185,4 +195,5 @@ async def generate_plan(req: PlanRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("server:app", host="0.0.0.0", port=port)

@@ -6,6 +6,11 @@ import MealCard      from './components/MealCard.jsx'
 import MealModal     from './components/MealModal.jsx'
 import BasketReview  from './components/BasketReview.jsx'
 
+// In production (Render), set VITE_API_URL to your backend service URL,
+// e.g. https://aldi-meal-planner-api.onrender.com
+// In development the Vite proxy handles the empty-string base, so fetch('/build-basket') still works.
+const API_BASE = import.meta.env.VITE_API_URL ?? ''
+
 // status flow:  idle → basket_loading → basket_review → loading → done | error
 const STAGE_DURATIONS = [3000, 3000, 14000, 2000]
 
@@ -43,7 +48,7 @@ export default function App() {
     setErrorMsg('')
 
     try {
-      const res = await fetch('/build-basket', {
+      const res = await fetch(`${API_BASE}/build-basket`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
@@ -84,7 +89,7 @@ export default function App() {
     startStageTicker(abortRef)
 
     try {
-      const res = await fetch('/generate-plan', {
+      const res = await fetch(`${API_BASE}/generate-plan`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ ...cfg, basket_items: basketItems }),
