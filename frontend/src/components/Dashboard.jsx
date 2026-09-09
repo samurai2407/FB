@@ -53,21 +53,23 @@ function ShoppingListBar({ basket }) {
   return (
     <div className="glass rounded-2xl px-5 py-3 flex items-center gap-3 flex-wrap"
          style={{ borderColor: 'rgba(45,106,79,0.25)' }}>
-      <span className="text-sm font-mono flex-1" style={{ color: G.textMid }}>
-        🛒 <strong>{basket.basket.length} items</strong> · €{basket.total?.toFixed(2)} — save your list before heading out
+      <span className="text-sm font-mono flex-1 min-w-0" style={{ color: G.textMid }}>
+        🛒 <strong>{basket.basket.length} items</strong> · €{basket.total?.toFixed(2)}
       </span>
-      <button onClick={handleCopy}
-        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-mono cursor-pointer transition-all"
-        style={{ border: `1px solid ${G.border}`,
-                 background: copied ? 'rgba(45,106,79,0.1)' : 'transparent',
-                 color: copied ? G.primary : G.textMuted }}>
-        {copied ? '✓ Copied!' : '📋 Copy list'}
-      </button>
-      <button onClick={handleDownload}
-        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-mono cursor-pointer transition-all"
-        style={{ border: `1px solid ${G.border}`, color: G.textMuted, background: 'transparent' }}>
-        ⬇ Download .txt
-      </button>
+      <div className="flex gap-2 shrink-0">
+        <button onClick={handleCopy}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-mono cursor-pointer transition-all"
+          style={{ border: `1px solid ${G.border}`,
+                   background: copied ? 'rgba(45,106,79,0.1)' : 'transparent',
+                   color: copied ? G.primary : G.textMuted }}>
+          {copied ? '✓ Copied!' : '📋 Copy list'}
+        </button>
+        <button onClick={handleDownload}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-mono cursor-pointer transition-all"
+          style={{ border: `1px solid ${G.border}`, color: G.textMuted, background: 'transparent' }}>
+          ⬇ Download .txt
+        </button>
+      </div>
     </div>
   )
 }
@@ -76,7 +78,7 @@ function MetricCard({ label, value, sub, style }) {
   return (
     <div className="glass rounded-2xl p-5 flex flex-col gap-1 flex-1 min-w-0" style={style}>
       <p className="text-xs font-mono tracking-widest uppercase" style={{ color: G.mid }}>{label}</p>
-      <p className="text-3xl font-bold font-mono truncate" style={{ color: G.text }}>{value}</p>
+      <p className="text-2xl font-bold font-mono leading-tight break-all" style={{ color: G.text }}>{value}</p>
       {sub && <p className="text-xs font-mono" style={{ color: G.textMuted }}>{sub}</p>}
     </div>
   )
