@@ -44,6 +44,7 @@ export default function App() {
   const [restored,     setRestored]     = useState(false) // show "restored" banner
 
   const latestConfig = useRef(null)
+  const latestBasket = useRef(null)  // same pattern — avoids stale closure in useCallback
 
   // ── Restore last session from localStorage on first load ────────────────
   useEffect(() => {
@@ -53,6 +54,7 @@ export default function App() {
       setBasket(s.basket)
       setConfig(s.config)
       latestConfig.current = s.config
+      latestBasket.current = s.basket
       setStatus('done')
       setRestored(true)
     }
@@ -94,6 +96,7 @@ export default function App() {
       }
       const data = await res.json()
       setBasket(data)
+      latestBasket.current = data
       setStatus('basket_review')
 
       // Store formValues in a ref so handleConfirmBasket always gets the
@@ -137,7 +140,7 @@ export default function App() {
       await new Promise(r => setTimeout(r, 600))
       setPlan(data)
       setStatus('done')
-      saveSession(data, basket, cfg)  // persist for reload
+      saveSession(data, latestBasket.current, cfg)  // use ref — basket state is stale in this closure
     } catch (err) {
       abortRef.aborted = true
       clearTimeout(abortRef.timer)
