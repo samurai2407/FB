@@ -1,0 +1,14 @@
+# ── Web framework & server ────────────────────────────────────────────────────
+fastapi==0.141.1
+uvicorn==0.30.1
+
+# ── AI / Gemini ───────────────────────────────────────────────────────────────
+google-genai==2.22.0
+
+# ── HTTP & environment ────────────────────────────────────────────────────────
+requests==2.34.2
+python-dotenv==1.2.1
+
+# ── Scraper (only needed to re-scrape the Aldi catalogue) ────────────────────
+playwright==1.62.0
+beautifulsoup4==4.15.0
