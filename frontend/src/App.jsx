@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import ConfigPanel   from './components/ConfigPanel.jsx'
 import LoadingState  from './components/LoadingState.jsx'
 import Dashboard     from './components/Dashboard.jsx'
@@ -6,10 +6,35 @@ import MealCard      from './components/MealCard.jsx'
 import MealModal     from './components/MealModal.jsx'
 import BasketReview  from './components/BasketReview.jsx'
 
-// In production (Render), set VITE_API_URL to your backend service URL,
-// e.g. https://aldi-meal-planner-api.onrender.com
-// In development the Vite proxy handles the empty-string base, so fetch('/build-basket') still works.
 const API_BASE = import.meta.env.VITE_API_URL ?? ''
+const STORAGE_KEY = 'mealplanner_session'
+
+// ── localStorage helpers ────────────────────────────────────────────────────
+function saveSession(plan, basket, config) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      plan, basket, config, savedAt: Date.now()
+    }))
+  } catch (_) {}
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const s = JSON.parse(raw)
+    // Expire after 24 hours
+    if (Date.now() - s.savedAt > 86_400_000) {
+      localStorage.removeItem(STORAGE_KEY)
+      return null
+    }
+    return s
+  } catch (_) { return null }
+}
+
+function clearSession() {
+  try { localStorage.removeItem(STORAGE_KEY) } catch (_) {}
+}
 
 // status flow:  idle → basket_loading → basket_review → loading → done | error
 const STAGE_DURATIONS = [3000, 3000, 14000, 2000]
@@ -22,11 +47,22 @@ export default function App() {
   const [basket,       setBasket]       = useState(null)
   const [errorMsg,     setErrorMsg]     = useState('')
   const [selectedMeal, setSelectedMeal] = useState(null)
+  const [restored,     setRestored]     = useState(false) // show "restored" banner
 
-  // Ref holds the latest submitted form values so handleConfirmBasket
-  // always sends the exact budget/settings the user entered, not a
-  // potentially-stale state snapshot from a previous render.
   const latestConfig = useRef(null)
+
+  // ── Restore last session from localStorage on first load ────────────────
+  useEffect(() => {
+    const s = loadSession()
+    if (s?.plan && s?.basket && s?.config) {
+      setPlan(s.plan)
+      setBasket(s.basket)
+      setConfig(s.config)
+      latestConfig.current = s.config
+      setStatus('done')
+      setRestored(true)
+    }
+  }, [])
 
   // ── Stage ticker for loading screen ────────────────────────────────
   function startStageTicker(abortRef) {
@@ -107,6 +143,7 @@ export default function App() {
       await new Promise(r => setTimeout(r, 600))
       setPlan(data)
       setStatus('done')
+      saveSession(data, basket, cfg)  // persist for reload
     } catch (err) {
       abortRef.aborted = true
       clearTimeout(abortRef.timer)
@@ -265,6 +302,17 @@ export default function App() {
           {/* DONE */}
           {status === 'done' && plan && (
             <div className="flex flex-col gap-6">
+
+              {/* Restored session banner */}
+              {restored && (
+                <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-sm font-mono"
+                     style={{ background: 'rgba(45,106,79,0.08)', border: '1px solid rgba(45,106,79,0.25)', color: '#2d6a4f' }}>
+                  <span>🔄 Your last plan was restored automatically</span>
+                  <button onClick={() => setRestored(false)}
+                    className="text-xs opacity-60 hover:opacity-100 cursor-pointer">✕</button>
+                </div>
+              )}
+
               <Dashboard
                 budget={config?.budget ?? 0}
                 verifiedTotal={plan.verified_total}
@@ -272,6 +320,7 @@ export default function App() {
                 violations={plan.violations}
                 plan={plan}
                 userMetrics={plan.user_metrics}
+                basket={basket}
               />
 
               {plan.meal_plan.map(dayObj => (
@@ -299,7 +348,7 @@ export default function App() {
               ))}
 
               <div className="flex justify-center pt-2 pb-4">
-                <button onClick={() => setStatus('idle')}
+                <button onClick={() => { clearSession(); setStatus('idle'); setRestored(false) }}
                   className="px-6 py-2.5 rounded-xl text-sm font-mono transition-all cursor-pointer"
                   style={{ border: '1px solid rgba(45,106,79,0.3)', color: '#40916c' }}>
                   ↻ Plan New Week

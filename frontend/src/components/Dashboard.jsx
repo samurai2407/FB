@@ -1,7 +1,75 @@
+import { useState } from 'react'
+
 const G = {
   primary: '#2d6a4f', mid: '#40916c', light: '#74c69d',
   text: '#1b2e1b', textMid: '#3a5c3a', textMuted: '#6b8f6b',
   border: 'rgba(45,106,79,0.2)', bgCard: 'rgba(255,255,255,0.5)',
+}
+
+// ── Shopping list export helpers ──────────────────────────────────────────────
+
+function buildShoppingText(items, total, budget) {
+  if (!items?.length) return ''
+  const lines = [
+    '🛒  ALDI SHOPPING LIST',
+    `    Budget: €${budget?.toFixed(2)}  |  Total: €${total?.toFixed(2)}`,
+    '─'.repeat(40),
+    '',
+    ...items.map(item =>
+      `☐  ${item.brand ? item.brand + ' ' : ''}${item.title}` +
+      `  (${item.weight_kg}kg)  €${item.price_eur?.toFixed(2)}`
+    ),
+    '',
+    '─'.repeat(40),
+    `TOTAL: €${total?.toFixed(2)}`,
+  ]
+  return lines.join('\n')
+}
+
+function ShoppingListBar({ basket }) {
+  const [copied, setCopied] = useState(false)
+  if (!basket?.basket?.length) return null
+
+  const text     = buildShoppingText(basket.basket, basket.total, basket.budget)
+  const filename = `aldi-shopping-list-€${basket.budget?.toFixed(0)}.txt`
+
+  async function handleCopy() {
+    try { await navigator.clipboard.writeText(text) } catch {
+      const ta = document.createElement('textarea')
+      ta.value = text; document.body.appendChild(ta); ta.select()
+      document.execCommand('copy'); document.body.removeChild(ta)
+    }
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
+  }
+
+  function handleDownload() {
+    const blob = new Blob([text], { type: 'text/plain' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url; a.download = filename; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div className="glass rounded-2xl px-5 py-3 flex items-center gap-3 flex-wrap"
+         style={{ borderColor: 'rgba(45,106,79,0.25)' }}>
+      <span className="text-sm font-mono flex-1" style={{ color: G.textMid }}>
+        🛒 <strong>{basket.basket.length} items</strong> · €{basket.total?.toFixed(2)} — save your list before heading out
+      </span>
+      <button onClick={handleCopy}
+        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-mono cursor-pointer transition-all"
+        style={{ border: `1px solid ${G.border}`,
+                 background: copied ? 'rgba(45,106,79,0.1)' : 'transparent',
+                 color: copied ? G.primary : G.textMuted }}>
+        {copied ? '✓ Copied!' : '📋 Copy list'}
+      </button>
+      <button onClick={handleDownload}
+        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-mono cursor-pointer transition-all"
+        style={{ border: `1px solid ${G.border}`, color: G.textMuted, background: 'transparent' }}>
+        ⬇ Download .txt
+      </button>
+    </div>
+  )
 }
 
 function MetricCard({ label, value, sub, style }) {
@@ -40,7 +108,7 @@ function NutritionBar({ label, value, target, color, unit = 'g' }) {
   )
 }
 
-export default function Dashboard({ budget, verifiedTotal, mealCount, violations, plan, userMetrics }) {
+export default function Dashboard({ budget, verifiedTotal, mealCount, violations, plan, userMetrics, basket }) {
   const remaining  = budget - verifiedTotal
   const pct        = Math.min(100, (verifiedTotal / budget) * 100)
   const overBudget = verifiedTotal > budget
@@ -85,6 +153,9 @@ export default function Dashboard({ budget, verifiedTotal, mealCount, violations
 
   return (
     <div className="flex flex-col gap-4">
+
+      {/* Shopping list export bar */}
+      <ShoppingListBar basket={basket} />
 
       {/* Violations */}
       {violations?.length > 0 && (

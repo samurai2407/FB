@@ -1,12 +1,86 @@
+import { useState } from 'react'
+
 const G = {
   primary: '#2d6a4f', mid: '#40916c', light: '#74c69d',
   text: '#1b2e1b', textMid: '#3a5c3a', textMuted: '#6b8f6b',
   border: 'rgba(45,106,79,0.2)', bgInput: 'rgba(255,255,255,0.65)',
 }
 
+// ── Export helpers ────────────────────────────────────────────────────────────
+
+function buildShoppingText(items, total, budget) {
+  const lines = [
+    '🛒  ALDI SHOPPING LIST',
+    `    Budget: €${budget.toFixed(2)}  |  Total: €${total.toFixed(2)}`,
+    '─'.repeat(40),
+    '',
+    ...items.map(item =>
+      `☐  ${item.brand ? item.brand + ' ' : ''}${item.title}` +
+      `  (${item.weight_kg}kg)  €${item.price_eur.toFixed(2)}`
+    ),
+    '',
+    '─'.repeat(40),
+    `TOTAL: €${total.toFixed(2)}`,
+  ]
+  return lines.join('\n')
+}
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false)
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Fallback for browsers without clipboard API
+      const ta = document.createElement('textarea')
+      ta.value = text
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+  return (
+    <button onClick={handleCopy}
+      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-mono transition-all cursor-pointer"
+      style={{ border: `1px solid ${G.border}`, color: copied ? G.primary : G.textMuted,
+               background: copied ? 'rgba(45,106,79,0.08)' : 'transparent' }}>
+      {copied ? '✓ Copied!' : '📋 Copy list'}
+    </button>
+  )
+}
+
+function DownloadButton({ text, filename }) {
+  function handleDownload() {
+    const blob = new Blob([text], { type: 'text/plain' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+  return (
+    <button onClick={handleDownload}
+      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-mono transition-all cursor-pointer"
+      style={{ border: `1px solid ${G.border}`, color: G.textMuted, background: 'transparent' }}>
+      ⬇ Download .txt
+    </button>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function BasketReview({ basket, onConfirm, onBack }) {
   const { basket: items, total, budget, remaining } = basket
   const pct = Math.min(100, (total / budget) * 100)
+
+  const shoppingText = buildShoppingText(items, total, budget)
+  const filename     = `aldi-shopping-list-€${budget.toFixed(0)}.txt`
 
   return (
     <div className="flex-1 flex flex-col gap-5">
@@ -48,11 +122,20 @@ export default function BasketReview({ basket, onConfirm, onBack }) {
           </span>
           <span>€{budget.toFixed(2)}</span>
         </div>
+
+        {/* Export buttons */}
+        <div className="flex gap-2 mt-4 pt-4" style={{ borderTop: `1px solid ${G.border}` }}>
+          <p className="text-xs font-mono self-center mr-auto" style={{ color: G.textMuted }}>
+            Save list for the store:
+          </p>
+          <CopyButton text={shoppingText} />
+          <DownloadButton text={shoppingText} filename={filename} />
+        </div>
       </div>
 
       {/* Item grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 overflow-y-auto"
-           style={{ maxHeight: 'calc(100vh - 420px)' }}>
+           style={{ maxHeight: 'calc(100vh - 460px)' }}>
         {items.map((item, i) => (
           <div key={i}
                className="glass rounded-xl px-4 py-3 flex items-center justify-between gap-3">
