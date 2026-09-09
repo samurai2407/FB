@@ -12,9 +12,7 @@ const STORAGE_KEY = 'mealplanner_session'
 // ── localStorage helpers ────────────────────────────────────────────────────
 function saveSession(plan, basket, config) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      plan, basket, config, savedAt: Date.now()
-    }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ plan, basket, config }))
   } catch (_) {}
 }
 
@@ -56,7 +54,7 @@ export default function App() {
       setConfig(s.config)
       latestConfig.current = s.config
       setStatus('done')
-      setRestored(s.savedAt ? new Date(s.savedAt).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : true)
+      setRestored(true)
     }
   }, [])
 
@@ -303,7 +301,7 @@ export default function App() {
               {restored && (
                 <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-sm font-mono"
                      style={{ background: 'rgba(45,106,79,0.08)', border: '1px solid rgba(45,106,79,0.25)', color: '#2d6a4f' }}>
-                  <span>🔄 Plan restored · saved {typeof restored === 'string' ? restored : 'earlier'}</span>
+                  <span>🔄 Restored your saved plan</span>
                   <button onClick={() => setRestored(false)}
                     className="text-xs opacity-60 hover:opacity-100 cursor-pointer">✕</button>
                 </div>
