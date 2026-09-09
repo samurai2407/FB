@@ -76,10 +76,10 @@ function ShoppingListBar({ basket }) {
 
 function MetricCard({ label, value, sub, style }) {
   return (
-    <div className="glass rounded-2xl p-5 flex flex-col gap-1 flex-1 min-w-0" style={style}>
-      <p className="text-xs font-mono tracking-widest uppercase" style={{ color: G.mid }}>{label}</p>
-      <p className="text-2xl font-bold font-mono leading-tight break-all" style={{ color: G.text }}>{value}</p>
-      {sub && <p className="text-xs font-mono" style={{ color: G.textMuted }}>{sub}</p>}
+    <div className="glass rounded-2xl p-4 flex flex-col gap-1 flex-1 min-w-0" style={style}>
+      <p className="text-[10px] font-mono tracking-widest uppercase" style={{ color: G.mid }}>{label}</p>
+      <p className="text-xl font-bold font-mono whitespace-nowrap overflow-hidden" style={{ color: G.text, fontSize: 'clamp(0.85rem, 3vw, 1.25rem)' }}>{value}</p>
+      {sub && <p className="text-[10px] font-mono" style={{ color: G.textMuted }}>{sub}</p>}
     </div>
   )
 }
@@ -177,14 +177,14 @@ export default function Dashboard({ budget, verifiedTotal, mealCount, violations
 
       {/* Budget metrics */}
       <div className="flex flex-wrap gap-3">
-        <MetricCard label="Weekly Budget"  value={`€${budget.toFixed(2)}`}
+        <MetricCard label="Weekly Budget"  value={`€${budget.toFixed(1)}`}
           sub="your configured limit"
           style={{ borderColor: 'rgba(45,106,79,0.22)' }} />
-        <MetricCard label="Estimated Cost" value={`€${verifiedTotal.toFixed(2)}`}
+        <MetricCard label="Estimated Cost" value={`€${verifiedTotal.toFixed(1)}`}
           sub={`${mealCount} meal${mealCount!==1?'s':''} planned`}
           style={{ borderColor: 'rgba(64,145,108,0.4)', boxShadow: '0 0 16px rgba(64,145,108,0.1)',
                    background: 'rgba(64,145,108,0.06)' }} />
-        <MetricCard label="Remaining Funds" value={`€${remaining.toFixed(2)}`}
+        <MetricCard label="Remaining Funds" value={`€${remaining.toFixed(1)}`}
           sub={overBudget ? 'over budget ⚠️' : 'left this week'}
           style={{ borderColor: overBudget ? 'rgba(220,38,38,0.35)' : 'rgba(45,106,79,0.25)' }} />
       </div>
